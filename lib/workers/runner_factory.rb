@@ -164,6 +164,11 @@ module Transferatu
       stdin, stdout, stderr, wthr = Open3.popen3(env, *cmd)
       ShellFuture.new(stdin, stdout, stderr, wthr)
     end
+
+    private
+    def unescape(str)
+      (str.is_a? String) ? URI.unescape(str) : str
+    end
   end
 
   # A source that runs pg_dump
@@ -177,13 +182,13 @@ module Transferatu
       uri = URI.parse(url)
       dbname = uri.path[1..-1]
       @env = { "LD_LIBRARY_PATH" => "#{root}/lib",
-               "PGPASSWORD" => uri.password,
+               "PGPASSWORD" => unescape(uri.password),
                "PGAPPNAME" => Config.pg_app_name }
       @cmd = command("#{root}/bin/pg_dump",
                      opts.merge(quote_all_identifiers: true,
-                                username: uri.user,
+                                username: unescape(uri.user),
                                 host: uri.host,
-                                port: uri.port || 5432), dbname)
+                                port: uri.port || 5432), unescape(dbname))
       @logger = logger
     end
 
@@ -269,13 +274,13 @@ module Transferatu
       uri = URI.parse(url)
       dbname = uri.path[1..-1]
       @env = { "LD_LIBRARY_PATH" => "#{root}/lib",
-               "PGPASSWORD" => uri.password,
+               "PGPASSWORD" => unescape(uri.password),
                "PGAPPNAME" => Config.pg_app_name }
       @cmd = command("#{root}/bin/pg_restore",
-                     opts.merge(username: uri.user,
+                     opts.merge(username: unescape(uri.user),
                                 host: uri.host,
                                 port: uri.port || 5432,
-                                dbname: dbname))
+                                dbname: unescape(dbname)))
       @logger = logger
     end
 
